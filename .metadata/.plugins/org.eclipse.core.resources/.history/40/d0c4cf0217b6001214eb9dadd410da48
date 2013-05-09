@@ -1,0 +1,108 @@
+package exam.ruri.shibuki.sockettest;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
+
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Message;
+import android.util.Log;
+import android.widget.EditText;
+
+public class AcceptLuaVMasync  extends AsyncTask<Integer, Integer, Integer >{
+	 private LoginActivity loginThred;
+	 public AcceptLuaVMasync(LoginActivity loginThred) {
+		 this.loginThred = loginThred;
+	 }
+	 @Override
+	 protected void onPostExecute(Integer result){
+		 if(result == 0) {
+			 //失敗
+			 Log.d("LOGIN", "FAILURE!!");
+		 } else {
+			 //成功
+			Log.d("LOGIN", "SUCCESS!!");
+		 }
+	 }
+	 @Override
+	 protected Integer doInBackground(Integer... arg0) {
+		 String address =
+             ((EditText)loginThred.findViewById(R.id.txtIPAdressq)).getText().toString();
+         String strPort =
+             ((EditText)loginThred.findViewById(R.id.txtPortq)).getText().toString();
+         int port = Integer.parseInt(strPort);
+
+         SocketChannel sc = null;
+
+         try {
+        	 sc = SocketChannel.open();
+        	 sc.configureBlocking(false);
+        	 sc.connect(new InetSocketAddress(address, port));
+        	 while(!sc.finishConnect()) {}
+        	 
+        	 //ログイン
+        	 byte[] userName = ((EditText)loginThred.findViewById(R.id.txtUserName)).getText().toString().getBytes("UTF-8");
+        	 byte[] password = ((EditText)loginThred.findViewById(R.id.txtPassword)).getText().toString().getBytes("UTF-8");
+        	 int status = 1;
+        	 int allLength = 8 + userName.length + password.length;
+        	 int userNameLength = userName.length;
+        	 int passwordLength = password.length;
+        	 
+        	 ByteBuffer buffer = ByteBuffer.allocate(16 + userNameLength + passwordLength);
+        	 buffer.putInt(status);
+        	 buffer.putInt(allLength);
+        	 buffer.putInt(userNameLength);
+        	 buffer.put(userName);
+        	 buffer.putInt(passwordLength);
+        	 buffer.put(password);
+        	 buffer.flip();
+        	 
+        	 //送信
+        	 sc.write(buffer);
+        	 
+        	 //結果取得
+        	 buffer = ByteBuffer.allocate(1024);
+        	 int numBytesRead;
+        	 while((numBytesRead = sc.read(buffer)) != -1) {
+ 				if(numBytesRead == 0 ) {
+					//
+					continue;
+				}
+ 				buffer.flip();
+				while(buffer.remaining() > 0) {
+					int statue = buffer.getInt();
+					int length = buffer.getInt();
+					byte[] bytes = new byte[length];
+					buffer.get(bytes);
+					String body = new String(bytes, "UTF-8");
+					if(statue == 0 && "success".equals(body)) {
+						loginThred.setSocket(sc);
+						return(1);
+					} else {
+						sc.close();
+						loginThred.setSocket(null);
+						return(0);
+					}
+				}
+        	 }
+        	 return(0);
+         } catch (Exception e) {
+         	Log.d("AcceptLuaVMasync", e.getMessage());
+         	if(sc != null) {
+         		try {
+					sc.close();
+				} catch (IOException ioex) {
+					ioex.printStackTrace();
+				}catch (Exception ex) {
+					ex.printStackTrace();
+				}
+         	}
+         	return(0);
+         }      
+	 }
+}

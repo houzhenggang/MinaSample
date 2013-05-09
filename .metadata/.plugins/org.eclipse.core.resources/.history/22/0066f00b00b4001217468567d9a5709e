@@ -1,0 +1,19 @@
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.util.Random;
+
+
+public class LockTest {
+	
+	private static final int SIZEOF_INT = 4;
+	private static final int INDEX_START = 0;
+	private static final int INDEX_COUNT = 10;
+	private static final int INDEX_SIZE = INDEX_COUNT * SIZEOF_INT;
+	private ByteBuffer buffer = ByteBuffer.allocate(INDEX_SIZE);
+	private IntBuffer indexBuffer = buffer.asIntBuffer();
+	private Random rand = new Random();
+
+	public static void main (String[] argv) throws Exception {
+		
+	}
+}

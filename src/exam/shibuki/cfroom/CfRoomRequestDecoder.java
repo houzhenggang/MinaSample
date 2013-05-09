@@ -1,0 +1,73 @@
+package exam.shibuki.cfroom;
+
+import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
+import org.apache.mina.filter.codec.ProtocolDecoderOutput;
+
+public class CfRoomRequestDecoder extends CumulativeProtocolDecoder {
+
+	@Override
+	protected boolean doDecode(IoSession ssn, IoBuffer in,
+			ProtocolDecoderOutput out) throws Exception {
+		if(in.remaining() >= 8) {
+			int status = in.getInt();
+			switch(status) {
+			case CfRoomConst.LOGIN:
+				//ログイン処理
+				UserInfo userInfo = loginDoDecode(in);
+				if(userInfo == null) {
+					return false;
+				} else {
+					out.write(userInfo);
+					return true;
+				}
+			case CfRoomConst.MARKER:
+				//マーカー処理
+				String markerInfo = broadcast(status, in);
+				if(markerInfo == null) {
+					return false;
+				} else {
+					out.write(markerInfo);
+					return true;
+				}
+			default :
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
+	private UserInfo loginDoDecode(IoBuffer in) throws Exception {
+		int length = in.getInt();
+		if(in.remaining() >= length) {
+			UserInfo userInfo = new UserInfo();
+			int memberLength = in.getInt();
+			userInfo.setUserName(readString(in, memberLength));
+			memberLength = in.getInt();
+			userInfo.setPassword(readString(in, memberLength));
+			return userInfo;
+		} else {
+			in.rewind();
+			return null;
+		}
+	}
+	
+	private String broadcast(int status, IoBuffer in) throws Exception {
+		int length = in.getInt();
+		if(in.remaining() >= length) {
+			int bufLength = 8 + length;
+			in.rewind();
+			return readString(in, bufLength);
+		} else {
+			return null;
+		}
+	}
+	
+	private String readString(IoBuffer in, int length) throws Exception {
+		byte[] bytes = new byte[length];
+		in.get(bytes);
+		return new String(bytes, "UTF-8");
+	}
+}

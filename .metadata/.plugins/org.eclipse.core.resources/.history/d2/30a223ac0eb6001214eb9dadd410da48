@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">SocketTest</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="ユーザー名">userName</string>
+    <string name="userName">ユーザー名</string>
+    <string name="password">パスワード</string>
+
+</resources>

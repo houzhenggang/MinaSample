@@ -1,0 +1,114 @@
+package exam.ruri.shibuki.sockettest;
+
+import java.net.Socket;
+import java.nio.channels.SocketChannel;
+
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.app.Activity;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnTouchListener;
+import android.widget.Button;
+
+public class MainActivity extends Activity {
+	
+	MainHandler myHandler;
+	private ThreadSend ts;
+	private ThreadReveive tr;
+	private SocketChannel sc;
+	
+	public void setSocket(SocketChannel sc) {
+		this.sc = sc;
+	}
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+        Button btn1 = (Button)findViewById(R.id.button1);
+        btn1.setOnClickListener(new View.OnClickListener() {
+        	@Override
+            public void onClick(View v){
+            	//Button btn = (Button)MainActivity.this.findViewById(R.id.button1);
+            	new AcceptLuaVMasync(MainActivity.this).execute();
+            	
+            	//TODO
+            	while(sc == null) {}
+            	
+            	ts = new ThreadSend(sc);
+            	ts.start();
+            	tr = new ThreadReveive(sc, MainActivity.this);
+            	tr.start();
+            }
+        });
+        /*
+        Button btn2 = (Button)findViewById(R.id.button2);
+        btn2.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+            	EditText et = (EditText)findViewById(R.id.txtSend);
+            	String message = et.getText().toString();
+            	Message msg = new Message();
+            	Bundle b = new Bundle();
+            	b.putString("2", message);
+            	msg.setData(b);
+				ts.myHandler.sendMessage(msg);
+			}
+		});*/
+        
+		CanvasView cv = (CanvasView)findViewById(R.id.canvasView1);
+		
+		cv.setOnTouchListener(new OnTouchListener() {
+			
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				String message = String.format("A%dX%fY%f", event.getAction(), event.getX(), event.getY());
+            	Message msg = new Message();
+            	Bundle b = new Bundle();
+            	b.putString("2", message);
+            	msg.setData(b);
+				ts.myHandler.sendMessage(msg);
+				return false;
+			}
+		});
+        
+        
+        myHandler = new MainHandler();
+    }
+	
+	class MainHandler extends Handler {
+		public MainHandler() {
+		}
+		
+		public MainHandler(Looper L) {
+			super(L);
+		}
+		
+		@Override
+		public void handleMessage(Message msg) {
+			Log.d("MyHandler", "handleMessage....");
+			super.handleMessage(msg);
+			switch(msg.getData().getInt("statues")) {
+			case 3:
+				
+				break;
+			default:
+				
+				break;
+			}
+			String message = msg.getData().getString("1");
+			int action = Integer.parseInt(message.substring(1, 2));
+			float x = Float.parseFloat(message.substring(message.indexOf("X") + 1, message.indexOf("Y") - message.indexOf("X") + 2));
+			float y = Float.parseFloat(message.substring(message.indexOf("Y") + 1));
+			
+			//Log.d("MyHandler_Output", String.format("A:%d, X:%f, Y:%f", action, x, y));
+			CanvasView cv = (CanvasView)findViewById(R.id.canvasView1);
+			cv.drawFromSocket(action, x, y);
+		}
+	}
+}
+

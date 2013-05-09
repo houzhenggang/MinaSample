@@ -1,0 +1,70 @@
+package exam.ruri.shibuki.sockettest;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.nio.channels.SocketChannel;
+
+import android.os.Bundle;
+import android.os.Message;
+import android.util.Log;
+
+public class ThreadReveive extends Thread{
+	private SocketChannel sc;
+	private MainActivity mainThread;
+	
+	public ThreadReveive(Socket socket,MainActivity mainThread) {
+		this.sc = sc;
+		this.mainThread = mainThread;
+	}
+	
+	@Override
+	public void run() {
+		receiveObj(sc);
+	}
+	
+	private void receiveObj(SocketChannel sc) {
+		Log.d("ThreadReceive", "Start...");
+		BufferedInputStream is = null;
+		try {
+			//is = new BufferedInputStream(socket.getInputStream());
+			is = null;
+			while(true) {
+				byte[] contents = new byte[1024];
+				if (null == is) {
+					break;
+				}
+	            int bytesRead=0;
+	            String message = null; 
+	            while( (bytesRead = is.read(contents)) != -1){ 
+	            	message = new String(contents, 0, bytesRead);    
+	            	Message msg = new Message();
+	            	Bundle b = new Bundle();
+	            	b.putString("1", message);
+	            	msg.setData(b);
+	            	mainThread.myHandler.sendMessage(msg);
+	            }
+			}
+		} catch (SocketException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (null != is) {
+					is.close();
+				}
+				if(null != socket) {
+					socket.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+}

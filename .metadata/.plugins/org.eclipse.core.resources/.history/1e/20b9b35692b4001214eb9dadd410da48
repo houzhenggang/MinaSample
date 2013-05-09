@@ -1,0 +1,100 @@
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.util.LinkedList;
+import java.util.List;
+
+
+public class SelectSocketsThreadPool {
+
+	private static final int MAX_THREADS = 5;
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+	}
+	
+	
+	
+	
+	
+	private class ThreadPool {
+		List<WorkerThread> idle = new LinkedList<WorkerThread>();
+		
+		public ThreadPool(int poolSize) {
+			// TODO Auto-generated constructor stub
+			for (int i = 0; i < poolSize; i++) {
+				
+			}
+		}
+		
+		WorkerThread getWorker() {
+			WorkerThread worker = null;
+			
+			synchronized (idle) {
+				if(idle.size() > 0) {
+					worker = idle.remove(0);
+				}
+			}
+			
+			return worker;
+		}
+		
+		void returnWorker(WorkerThread worker) {
+			synchronized (idle) {
+				idle.add(worker);
+			}
+		}
+	}
+	
+	private class WorkerThread extends Thread {
+		private ByteBuffer buffer = ByteBuffer.allocate(1024);
+		private ThreadPool pool;
+		private SelectionKey key;
+		
+		public WorkerThread(ThreadPool pool) {
+			// TODO Auto-generated constructor stub
+			this.pool = pool;
+		}
+		
+		public synchronized void run() {
+			System.out.println(this.getName() + " is ready");
+			while(true) {
+				try {
+					this.wait();
+				} catch(InterruptedException e) {
+					e.printStackTrace();
+					this.interrupted();
+				}
+				
+				if(key == null) {
+					continue;
+				}
+				
+				System.out.println(this.getName() + " has been awakened");
+				try {
+					
+				} catch(Exception e) {
+					System.out.println("Caught '" + e + "' closing channel");
+					
+					try {
+						key.channel().close();
+					} catch(IOException ex) {
+						ex.printStackTrace();
+					}
+					
+					key.selector().wakeup();
+				}
+				
+				key = null;
+				
+				
+			}
+		}
+	}
+	
+
+}

@@ -1,0 +1,72 @@
+package exam.ruri.shibuki.sockettest;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.Socket;
+import java.net.SocketException;
+import java.nio.channels.SocketChannel;
+
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.util.Log;
+
+public class ThreadSend extends Thread{
+	private SocketChannel sc;
+	ChildHandler myHandler;
+	
+	public ThreadSend(SocketChannel sc) {
+		this.sc = sc;
+	}
+	
+	@Override
+	public void run() {
+		Looper.prepare();
+		myHandler = new ChildHandler();
+		Looper.loop();
+	}
+	
+	private void sendObj(Message msg) {
+		Log.d("ThreadSend", "Start...");
+		
+		BufferedWriter bw1 = null;
+		try {
+			/*
+			bw1 = new BufferedWriter(new OutputStreamWriter(sc.getOutputStream()));			
+			bw1.write(msg.getData().getString("2") + "\r\n");
+			bw1.flush();
+			*/
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (null != bw1) {
+					//bw1.close();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	class ChildHandler extends Handler {
+		public ChildHandler() {
+			
+		}
+		
+		public ChildHandler(Looper L) {
+			super(L);
+		}
+		
+		@Override
+		public void handleMessage(Message msg) {
+			Log.d("ChildHandler", "handleMessage....");
+			super.handleMessage(msg);
+			Log.d("ChildHandler_Output", msg.getData().getString("2"));
+			sendObj(msg);
+		}
+	}
+}
+

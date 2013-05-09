@@ -1,0 +1,18 @@
+1367815879862	Delete element
+1367815911880	Delete element
+1367816130252	Delete element
+1367816685167	Rename field 'button1'
+1367818018388	Rename field 'btnLogin'
+1367818207451	Rename field 'textView1'
+1367818233614	Extracts string 'null' into R.string.ユーザー名
+1367818271926	Extracts string 'null' into R.string.userName
+1367818397133	Extracts string 'null' into R.string.password
+1367818512849	Rename field 'editText1'
+1367818569653	Rename field 'editText1'
+1367818611116	Extracts string 'null' into R.string.login
+1367820852041	Rename field 'txtIPAdress'
+1367820872144	Rename field 'txtPort'
+1367820880316	Rename field 'editText1'
+1367820895462	Rename field 'editText2'
+1367823148013	Delete element
+1367823854733	Rename compilation unit 'ParObject.java'

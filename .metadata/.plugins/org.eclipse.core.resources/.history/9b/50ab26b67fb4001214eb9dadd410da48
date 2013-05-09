@@ -1,0 +1,32 @@
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+
+
+public class ChannelAccept {
+	
+	public static final String GREETING = "Hello I must be going.\r\n";
+	
+	public static void main(String [] argv) throws Exception {
+		String host = "192.168.1.49";
+		int port = 50001;
+		
+		InetSocketAddress addr = new  InetSocketAddress(host, port);
+		SocketChannel sc = SocketChannel.open();
+		sc.configureBlocking(false);
+		System.out.println("initiating connection");
+		sc.connect(addr);
+		
+		while(!sc.finishConnect()) {
+			//
+		}
+		
+		System.out.println("connection established");
+		ByteBuffer buffer = ByteBuffer.wrap(GREETING.getBytes());
+		buffer.rewind();
+		sc.write(buffer);
+		sc.close();
+		
+	}
+
+}

@@ -1,0 +1,69 @@
+package exam.ruri.shibuki.sockettest;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+
+import android.os.Bundle;
+import android.os.Message;
+import android.util.Log;
+
+public class ThreadReveive extends Thread{
+	private SocketChannel sc;
+	private MainActivity mainThread;
+	
+	public ThreadReveive(SocketChannel sc,MainActivity mainThread) {
+		this.sc = sc;
+		this.mainThread = mainThread;
+	}
+	
+	@Override
+	public void run() {
+		receiveObj(sc);
+	}
+	
+	private void receiveObj(SocketChannel sc) {
+		Log.d("ThreadReceive", "Start...");
+		ByteBuffer buffer = ByteBuffer.allocate(1024);
+		try {
+			//is = new BufferedInputStream(socket.getInputStream());
+			buffer.clear();
+			int numBytesRead;
+			while((numBytesRead = sc.read(buffer)) != -1) {
+				//TODO 桁数のチェックも必要。
+				if(numBytesRead == 0 ) {
+					//
+					continue;
+				}
+				buffer.flip();
+				//statue
+				int statue = buffer.getInt();
+				int length = buffer.getInt();
+				byte[] bytes = new byte[buffer.remaining()];
+				buffer.get(bytes);
+				String str = String.valueOf(statue) + String.valueOf(length) + new String(bytes, "UTF-8");
+				Log.d("receive", str);
+            	Bundle b = new Bundle();
+            	b.putString("1", str);
+            	Message msg = new Message();
+            	msg.setData(b);
+            	//mainThread.myHandler.sendMessage(msg);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if(null != sc) {
+					sc.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+}

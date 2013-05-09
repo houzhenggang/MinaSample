@@ -1,0 +1,82 @@
+import static org.apache.mina.statemachine.event.IoHandlerEvents.MESSAGE_RECEIVED;
+
+import java.util.Collection;
+
+import org.apache.mina.core.service.IoHandlerAdapter;
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.statemachine.annotation.IoHandlerTransition;
+import org.apache.mina.statemachine.annotation.State;
+import org.apache.mina.statemachine.context.AbstractStateContext;
+import org.apache.mina.statemachine.event.Event;
+
+
+public class ConfRoomServerHandler extends IoHandlerAdapter {
+	@State public static final String ROOT = "root";
+	@State(ROOT) public static final String NOT_CONNECTED = "NotConnected";
+	@State(ROOT) public static final String CONNECTED = "Connected";
+	
+	@IoHandlerTransition(in = ROOT, weight = 100) 
+	public void unhandledEvent(Event event) { 
+		System.out.println("Warning..");
+	} 
+	
+	@Override
+	public void exceptionCaught(IoSession ssn, Throwable cause) throws Exception {
+		cause.printStackTrace();
+	}
+	
+	@IoHandlerTransition(on = MESSAGE_RECEIVED, in = NOT_CONNECTED, next = CONNECTED)
+	public void firstConnect(MyContext myContext, IoSession ssn, Object message) throws Exception {
+		String str = message.toString();
+		System.out.println("Message read:");
+		System.out.println(str);
+		
+		//sessionIDŽæ“¾
+		long id = ssn.getId();
+		myContext.contextName = String.valueOf(id);
+		
+		//Date date = new Date();
+		Collection<IoSession> ssns = ssn.getService().getManagedSessions().values();
+		for(IoSession issns : ssns) {
+			if(issns.getId() != id)
+				issns.write(String.format("%d : %s(i am a new man!)",id,  message));
+		}
+		//ssn.write(date.toString());
+		System.out.println("Message written...");
+		//Thread.sleep(10000);
+		//ssn.close(true);
+		System.out.println("contextName" + myContext.contextName);
+	}
+	
+	@IoHandlerTransition(on = MESSAGE_RECEIVED, in = CONNECTED)
+	public void notFirstConnect(MyContext myContext, IoSession ssn, Object message) throws Exception {
+		String str = message.toString();
+		System.out.println("Message read:");
+		System.out.println(str);
+		
+		//sessionIDŽæ“¾
+		long id = ssn.getId();
+		
+		//Date date = new Date();
+		Collection<IoSession> ssns = ssn.getService().getManagedSessions().values();
+		for(IoSession issns : ssns) {
+			if(issns.getId() != id)
+				issns.write(String.format("%d : %s(i am a old man!)",id,  message));
+		}
+		//ssn.write(date.toString());
+		System.out.println("Message written...");
+		//Thread.sleep(10000);
+		//ssn.close(true);
+		System.out.println("contextName" + myContext.contextName);
+	}
+	
+	@Override
+	public void sessionIdle(IoSession ssn, IdleStatus status) throws Exception{
+		System.out.println("IDLE " + ssn.getIdleCount(status));
+	}
+	
+	static class ConfRoomContext extends AbstractStateContext {   
+	    public String contextName;   
+	}
+}

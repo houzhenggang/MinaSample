@@ -1,0 +1,48 @@
+package exam.ruri.shibuki.sockettest;
+
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
+
+import android.os.AsyncTask;
+import android.util.Log;
+import android.widget.EditText;
+
+public class AcceptLuaVMasync  extends AsyncTask<Integer, Integer, Integer >{
+	 private LoginActivity prMainThred;
+	 public AcceptLuaVMasync(LoginActivity mainThred) {
+	   prMainThred = mainThred;
+	 }
+	 @Override
+	 protected void onPostExecute(Integer result){
+	   //
+	 }
+	 @Override
+	 protected Integer doInBackground(Integer... arg0) {
+		 String address =
+                 ((EditText)prMainThred.findViewById(R.id.txtIPAdress)).getText().toString();
+             String strPort =
+                 ((EditText)prMainThred.findViewById(R.id.txtPort)).getText().toString();
+             int port = Integer.parseInt(strPort);
+
+             SocketChannel sc = null;
+
+             try {
+            	 sc = SocketChannel.open();
+            	 sc.configureBlocking(false);
+            	 sc.connect(new InetSocketAddress(address, port));
+            	 while(!sc.finishConnect()) {}
+            	 
+            	 //ログイン
+            	 
+            	 
+             } catch (Exception e) {
+             	Log.d("AcceptLuaVMasync", e.getMessage());
+             }
+
+             prMainThred.setSocket(sc);
+        return(1);
+	 }
+}

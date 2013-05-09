@@ -1,0 +1,7 @@
+package exam.ruri.shibuki.sockettest;
+
+import java.nio.channels.SocketChannel;
+
+public class ParSocketChannel extends SocketChannel {
+
+}
