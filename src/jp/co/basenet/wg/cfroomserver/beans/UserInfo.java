@@ -1,4 +1,4 @@
-package exam.shibuki.cfroom;
+package jp.co.basenet.wg.cfroomserver.beans;
 
 public class UserInfo {
 	

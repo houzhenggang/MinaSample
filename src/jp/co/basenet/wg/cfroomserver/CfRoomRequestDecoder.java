@@ -1,4 +1,7 @@
-package exam.shibuki.cfroom;
+package jp.co.basenet.wg.cfroomserver;
+
+import jp.co.basenet.wg.cfroomserver.beans.NorRequestObj;
+import jp.co.basenet.wg.cfroomserver.beans.UserInfo;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
@@ -22,17 +25,21 @@ public class CfRoomRequestDecoder extends CumulativeProtocolDecoder {
 					out.write(userInfo);
 					return true;
 				}
-			case CfRoomConst.MARKER:
+			//case CfRoomConst.GIVE_ME_LOBBY_INFO:	
+				//会議室一覧取得請求
+			//case CfRoomConst.MARKER:
 				//マーカー処理
-				String markerInfo = broadcast(status, in);
-				if(markerInfo == null) {
+			default:
+				System.out.println("GIVE_ME_LOBBY_INFO start..:");
+				NorRequestObj nro = broadcast(status, in);
+				if(nro == null) {
+					System.out.println("GIVE_ME_LOBBY_INFO false..:");
 					return false;
 				} else {
-					out.write(markerInfo);
+					System.out.println("GIVE_ME_LOBBY_INFO success..:");
+					out.write(nro);
 					return true;
 				}
-			default :
-				return false;
 			}
 		} else {
 			return false;
@@ -54,12 +61,14 @@ public class CfRoomRequestDecoder extends CumulativeProtocolDecoder {
 		}
 	}
 	
-	private String broadcast(int status, IoBuffer in) throws Exception {
+	private NorRequestObj broadcast(int status, IoBuffer in) throws Exception {
 		int length = in.getInt();
+		System.out.println("GIVE_ME_LOBBY_INFO length..:" + length);
+		System.out.println("GIVE_ME_LOBBY_INFO remaining..:" + in.remaining());
 		if(in.remaining() >= length) {
-			int bufLength = 8 + length;
-			in.rewind();
-			return readString(in, bufLength);
+			//int bufLength = 8 + length;
+			//in.rewind();
+			return new NorRequestObj(status, readString(in, length));
 		} else {
 			return null;
 		}

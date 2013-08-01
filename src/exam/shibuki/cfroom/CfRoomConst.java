@@ -1,9 +1,0 @@
-package exam.shibuki.cfroom;
-
-public class CfRoomConst {
-	
-	public static final int LOGIN = 1;
-	
-	public static final int MARKER = 3;
-
-}

@@ -1,4 +1,4 @@
-package exam.shibuki.cfroom;
+package jp.co.basenet.wg.cfroomserver;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -24,7 +24,7 @@ import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 
 public class CfRoomServer {
 
-	private static final int PORT = 50003;
+	private static final int PORT = 40005;
 	/**
 	 * @param args
 	 * @throws IOException 

@@ -1,4 +1,4 @@
-package exam.shibuki.cfroom;
+package jp.co.basenet.wg.cfroomserver;
 
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFactory;
