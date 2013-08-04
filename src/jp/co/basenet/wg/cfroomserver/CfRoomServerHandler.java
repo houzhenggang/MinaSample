@@ -150,7 +150,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				//ファイル転送
 				//TODO DBから取得するように修正する予定
 				System.out.println("2102 main process start..:");
-				String filePath = "/home/ruri/temp/demo.txt";
+				String filePath = "picture.png";
 				FileInputStream fis = new FileInputStream(new File(filePath));
 				//ファイルのサイズ
 				int fileSize = fis.available();
@@ -162,8 +162,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				int recordCount = fileSize / 512 + 1;
 				byte[] a = new byte[512];
 				while((currentSize = fis.read(a, 0, a.length)) != -1) {
-					System.out.println("ファイル内容：" + new String(a));
-					ssn.write(new NorResponseObj(2202, currentSize, fileSize, seqNo, recordCount, a));
+					ssn.write(new NorResponseObj(2202, currentSize, fileSize, seqNo++, recordCount, a));
 				}
 				break;
 			default:
