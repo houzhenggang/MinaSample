@@ -4,6 +4,7 @@ import static org.apache.mina.statemachine.event.IoHandlerEvents.MESSAGE_RECEIVE
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 import jp.co.basenet.wg.cfroomserver.beans.FileDetailInfo;
@@ -22,6 +23,7 @@ import org.apache.mina.statemachine.context.AbstractStateContext;
 import org.apache.mina.statemachine.event.Event;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 
 public class CfRoomServerHandler extends IoHandlerAdapter {
@@ -127,7 +129,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 		            FileDetailInfo fdi = new FileDetailInfo();
 		            fdi.setFileId(1);
 		            fdi.setPageId(i);
-		            fdi.setFileName("ファイル1_" );
+		            fdi.setFileName("picture.png" );
 		            fdi.setFileSize(10000);
 		            fdi.setPageSize(100);
 		            fileDetailInfoList.add(fdi);
@@ -138,7 +140,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 		            FileDetailInfo fdi = new FileDetailInfo();
 		            fdi.setFileId(2);
 		            fdi.setPageId(i);
-		            fdi.setFileName("ファイル2_" );
+		            fdi.setFileName("picture2.png" );
 		            fdi.setFileSize(20000);
 		            fdi.setPageSize(200);
 		            fileDetailInfoList.add(fdi);
@@ -150,8 +152,11 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				//ファイル転送
 				//TODO DBから取得するように修正する予定
 				System.out.println("2102 main process start..:");
-				String filePath = "picture.png";
-				FileInputStream fis = new FileInputStream(new File(filePath));
+				Type listType = new TypeToken<FileDetailInfo>(){}.getType();
+				FileDetailInfo fileDetailInfo = new Gson().fromJson(nreo.getMessage(), listType);
+				
+				//String filePath = "picture.png";
+				FileInputStream fis = new FileInputStream(new File(fileDetailInfo.getFileName()));
 				//ファイルのサイズ
 				int fileSize = fis.available();
 				//当レコードのサイズ
