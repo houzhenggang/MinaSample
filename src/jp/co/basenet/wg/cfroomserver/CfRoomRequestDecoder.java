@@ -1,7 +1,7 @@
 package jp.co.basenet.wg.cfroomserver;
 
-import jp.co.basenet.wg.cfroomserver.beans.NorRequestObj;
-import jp.co.basenet.wg.cfroomserver.beans.UserInfo;
+import jp.co.basenet.wg.cfroomserver.model.NorRequestObj;
+import jp.co.basenet.wg.cfroomserver.model.UserInfo;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
@@ -70,6 +70,7 @@ public class CfRoomRequestDecoder extends CumulativeProtocolDecoder {
 			//in.rewind();
 			return new NorRequestObj(status, readString(in, length));
 		} else {
+			in.rewind();
 			return null;
 		}
 	}

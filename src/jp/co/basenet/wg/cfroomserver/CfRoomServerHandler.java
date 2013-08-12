@@ -7,12 +7,12 @@ import java.io.FileInputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
-import jp.co.basenet.wg.cfroomserver.beans.FileDetailInfo;
-import jp.co.basenet.wg.cfroomserver.beans.NorRequestObj;
-import jp.co.basenet.wg.cfroomserver.beans.NorResponseObj;
-import jp.co.basenet.wg.cfroomserver.beans.RoomButtonInfo;
-import jp.co.basenet.wg.cfroomserver.beans.RoomDetailInfo;
-import jp.co.basenet.wg.cfroomserver.beans.UserInfo;
+import jp.co.basenet.wg.cfroomserver.model.FileDetailInfo;
+import jp.co.basenet.wg.cfroomserver.model.NorRequestObj;
+import jp.co.basenet.wg.cfroomserver.model.NorResponseObj;
+import jp.co.basenet.wg.cfroomserver.model.RoomButtonInfo;
+import jp.co.basenet.wg.cfroomserver.model.RoomDetailInfo;
+import jp.co.basenet.wg.cfroomserver.model.UserInfo;
 
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;

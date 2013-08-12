@@ -1,4 +1,4 @@
-package jp.co.basenet.wg.cfroomserver.beans;
+package jp.co.basenet.wg.cfroomserver.model;
 
 import java.nio.charset.Charset;
 

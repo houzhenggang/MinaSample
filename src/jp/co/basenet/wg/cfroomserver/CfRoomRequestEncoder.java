@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 
-import jp.co.basenet.wg.cfroomserver.beans.NorResponseObj;
+import jp.co.basenet.wg.cfroomserver.model.NorResponseObj;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
