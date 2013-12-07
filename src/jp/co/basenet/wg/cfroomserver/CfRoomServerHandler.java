@@ -5,7 +5,9 @@ import static org.apache.mina.statemachine.event.IoHandlerEvents.MESSAGE_RECEIVE
 import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Type;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import jp.co.basenet.wg.cfroomserver.model.FileDetailInfo;
 import jp.co.basenet.wg.cfroomserver.model.NorRequestObj;
@@ -51,23 +53,49 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 		String result;
 		if("base".equals(userInfo.getUserName()) && "base".equals(userInfo.getPassword())) {
 			System.out.println("login success..");
+			//TODO
+			//テスト用
+			ssn.setAttribute("TEST", "1");
+			result = "SUCCESS";
+		} else if ("base1".equals(userInfo.getUserName()) && "base1".equals(userInfo.getPassword())) {
+			System.out.println("login success..");
+			//TODO
+			//テスト用
+			ssn.setAttribute("TEST", "0");
 			result = "SUCCESS";
 		} else {
 			System.out.println("login failure..");
 			result = "FAILURE";
 		}
-		ssn.setAttribute("roomId", "-1");
-		ssn.setAttribute("status", "inactive");
-		
+		//ルーム番号
+		//-1 入室しない
+		ssn.setAttribute("roomId", "-1"); 
+		//状態(入室しない場合"")
+		//inactive 同期しない
+		//active 同期中
+		ssn.setAttribute("status", "");
+		//身分(入室しない場合"")
+		//sponsor 主催者
+		//member 一般参加者
+		ssn.setAttribute("position", "");
 		ssn.write(new NorResponseObj(0001, -1, -1, 1, 1, result));
 	}
 
 	@IoHandlerTransition(on = MESSAGE_RECEIVED, in = CONNECTED)
 	public void notFirstConnect(ConfRoomContext myContext, IoSession ssn, Object message) throws Exception {
 		NorRequestObj nreo = (NorRequestObj)message;
-		System.out.println("Message read:");
-		System.out.println(nreo.getMessage());
+		System.out.println("Status read:");
+		System.out.println(nreo.getStatus());
 		int roomId;
+		Collection<IoSession> ssns;
+		
+		//当レコードのサイズ
+		int currentSize;
+		//連番、1から
+		int seqNo;
+		//レコード件数
+		int recordCount;
+		byte[] a;
 		
 		//sessionID取得
 		long id = ssn.getId();
@@ -78,7 +106,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				//TODO
 				System.out.println("1101 main process start..:");
 				ArrayList<RoomButtonInfo> roomButtonList = new ArrayList<RoomButtonInfo>();
-				for(int i = 0; i < 6; i++) {
+				for(int i = 0; i < 15; i++) {
 		            RoomButtonInfo rbi = new RoomButtonInfo();
 		            rbi.setId(i);
 		            rbi.setRoomName("ダミルーム" + i);
@@ -86,7 +114,24 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 		            roomButtonList.add(rbi);
 		        }
 				String roomButtonListJson = gson.toJson(roomButtonList);
-				ssn.write(new NorResponseObj(1201, -1, -1, 1, 1, roomButtonListJson));				
+				//連番、1から
+				seqNo = 1;
+				//byte変換
+				byte[] tempMsg = roomButtonListJson.getBytes(Charset.forName("UTF-8"));
+				//長さ
+				int length = tempMsg.length;
+				//レコード件数
+				recordCount = length / 512 + 1;
+				while(length >= 512) {
+					a = new byte[512];
+					System.arraycopy(tempMsg, tempMsg.length - length, a, 0, 512);
+					ssn.write(new NorResponseObj(1201, 512, tempMsg.length, seqNo++, recordCount, a));
+					length -= 512;
+				}
+				a = new byte[512];
+				System.arraycopy(tempMsg, tempMsg.length - length, a, 0, length);
+				ssn.write(new NorResponseObj(1201, 512, tempMsg.length, seqNo++, recordCount, a));
+				//ssn.write(new NorResponseObj(1201, -1, -1, 1, 1, roomButtonListJson));				
 				break;
 			case 1102:
 				//会議室詳細情報を返す
@@ -110,12 +155,24 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				String result;
 				if(roomId == 5) {
 					System.out.println("enter success..");
-					result = "SUCCESS";
+					if("1".equals(ssn.getAttribute("TEST"))) {
+						//TODO
+						//ステータスを通知
+						result = "sponser";
+					} else {
+						result = "member";
+					}
 				} else {
 					System.out.println("enter failure..");
 					result = "FAILURE";
 				}
 				ssn.setAttribute("roomId", roomId);
+				ssn.setAttribute("status", "active");
+				if("1".equals(ssn.getAttribute("TEST"))) {
+					ssn.setAttribute("position", "sponser");
+				} else {
+					ssn.setAttribute("position", "member");
+				}
 				ssn.write(new NorResponseObj(1203, -1, -1, 1, 1, result));	
 				break;
 			case 2101:
@@ -125,7 +182,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				ArrayList<FileDetailInfo> fileDetailInfoList = new ArrayList<FileDetailInfo>();
 				
 				//ダミーファイル１
-				for(int i = 0; i < 2; i++) {
+				for(int i = 0; i < 3; i++) {
 		            FileDetailInfo fdi = new FileDetailInfo();
 		            fdi.setFileId(1);
 		            fdi.setPageId(i);
@@ -136,7 +193,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 		        }
 				
 				//ダミーファイル２
-				for(int i = 0; i < 2; i++) {
+				for(int i = 0; i < 3; i++) {
 		            FileDetailInfo fdi = new FileDetailInfo();
 		            fdi.setFileId(2);
 		            fdi.setPageId(i);
@@ -145,6 +202,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 		            fdi.setPageSize(200);
 		            fileDetailInfoList.add(fdi);
 		        }
+				
 				String fileDetailInfoListJson = gson.toJson(fileDetailInfoList);
 				ssn.write(new NorResponseObj(2201, -1, -1, 1, 1, fileDetailInfoListJson));	
 				break;
@@ -155,19 +213,49 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				Type listType = new TypeToken<FileDetailInfo>(){}.getType();
 				FileDetailInfo fileDetailInfo = new Gson().fromJson(nreo.getMessage(), listType);
 				
-				//String filePath = "picture.png";
 				FileInputStream fis = new FileInputStream(new File(fileDetailInfo.getFileName()));
 				//ファイルのサイズ
 				int fileSize = fis.available();
-				//当レコードのサイズ
-				int currentSize;
 				//連番、1から
-				int seqNo = 1;
+				seqNo = 1;
 				//レコード件数
-				int recordCount = fileSize / 512 + 1;
-				byte[] a = new byte[512];
+				recordCount = fileSize / 512 + 1;
+				a = new byte[512];
 				while((currentSize = fis.read(a, 0, a.length)) != -1) {
 					ssn.write(new NorResponseObj(2202, currentSize, fileSize, seqNo++, recordCount, a));
+				}
+				break;
+			case 3101:
+				//ページ情報転送
+				System.out.println("3101 main process start..:");
+				System.out.println("ページ：" + nreo.getMessage());
+				//ルーム番号
+				roomId = (Integer)ssn.getAttribute("roomId");
+				ssns = ssn.getService().getManagedSessions().values();
+				for(IoSession ossn : ssns) {
+					//自分以外の同じルームにいるしかも同期中のメンバのみに送信
+					if(ossn.getId() != ssn.getId() 
+							&& roomId == (Integer)ssn.getAttribute("roomId")
+							&& !"inactive".equals((String)ossn.getAttribute("status"))) {
+						ossn.write(new NorResponseObj(3102, -1, -1, 1, 1, nreo.getMessage()));	
+					}
+				}
+				break;
+			case 3201:
+				//マーカ転送
+				System.out.println("3201 main process start..:");
+				System.out.println("マーカ：" + nreo.getMessage());
+				//ほかの端末に転送
+				//ルーム番号
+				roomId = (Integer)ssn.getAttribute("roomId");
+				ssns = ssn.getService().getManagedSessions().values();
+				for(IoSession ossn : ssns) {
+					//自分以外の同じルームにいるしかも同期中のメンバのみに送信
+					if(ossn.getId() != ssn.getId() 
+							&& roomId == (Integer)ssn.getAttribute("roomId")
+							&& !"inactive".equals((String)ossn.getAttribute("status"))) {
+						//ossn.write(new NorResponseObj(3202, -1, -1, 1, 1, nreo.getMessage()));	
+					}
 				}
 				break;
 			default:
