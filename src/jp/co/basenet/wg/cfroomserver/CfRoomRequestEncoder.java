@@ -22,7 +22,6 @@ public class CfRoomRequestEncoder implements ProtocolEncoder{
 	public void encode(IoSession ssn, Object message, ProtocolEncoderOutput out)
 			throws Exception {
 		System.out.println("response message: " + ((NorResponseObj)message).getMessage() );
-		byte[] bytes;
 		int status = ((NorResponseObj)message).getStatus();
 		int currentSize = ((NorResponseObj)message).getCurrentSize();
 		int fullSize = ((NorResponseObj)message).getFullSize();

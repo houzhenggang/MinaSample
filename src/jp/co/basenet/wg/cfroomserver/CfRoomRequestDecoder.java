@@ -51,7 +51,7 @@ public class CfRoomRequestDecoder extends CumulativeProtocolDecoder {
 		if(in.remaining() >= length) {
 			UserInfo userInfo = new UserInfo();
 			int memberLength = in.getInt();
-			userInfo.setUserName(readString(in, memberLength));
+			userInfo.setUserId(readString(in, memberLength));
 			memberLength = in.getInt();
 			userInfo.setPassword(readString(in, memberLength));
 			return userInfo;

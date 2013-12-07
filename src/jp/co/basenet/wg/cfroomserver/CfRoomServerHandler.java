@@ -6,16 +6,25 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import jp.co.basenet.wg.cfroomserver.dao.MeetingsDAO;
+import jp.co.basenet.wg.cfroomserver.dao.UsersDAO;
 import jp.co.basenet.wg.cfroomserver.model.FileDetailInfo;
 import jp.co.basenet.wg.cfroomserver.model.NorRequestObj;
 import jp.co.basenet.wg.cfroomserver.model.NorResponseObj;
 import jp.co.basenet.wg.cfroomserver.model.RoomButtonInfo;
 import jp.co.basenet.wg.cfroomserver.model.RoomDetailInfo;
 import jp.co.basenet.wg.cfroomserver.model.UserInfo;
+import jp.co.basenet.wg.cfroomserver.mybatis.MyBatisConnectionFactory;
 
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
@@ -45,19 +54,21 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 	
 	@IoHandlerTransition(on = MESSAGE_RECEIVED, in = NOT_CONNECTED, next = CONNECTED)
 	public void Login(ConfRoomContext context, IoSession ssn, Object message) throws Exception {
+		UsersDAO usersDAO = new UsersDAO(MyBatisConnectionFactory.getSqlSessionFactory());
 		UserInfo userInfo = (UserInfo)message;
+		
 		System.out.println("login main process start..:");
-		System.out.println("UserName: " + userInfo.getUserName());
+		System.out.println("UserId: " + userInfo.getUserId());
 		System.out.println("Password: " + userInfo.getPassword());
 		
 		String result;
-		if("base".equals(userInfo.getUserName()) && "base".equals(userInfo.getPassword())) {
+		if("base".equals(userInfo.getUserId()) && "base".equals(userInfo.getPassword())) {
 			System.out.println("login success..");
 			//TODO
 			//テスト用
 			ssn.setAttribute("TEST", "1");
 			result = "SUCCESS";
-		} else if ("base1".equals(userInfo.getUserName()) && "base1".equals(userInfo.getPassword())) {
+		} else if (usersDAO.selectCountByUserId(userInfo) > 0) {
 			System.out.println("login success..");
 			//TODO
 			//テスト用
@@ -88,6 +99,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 		System.out.println(nreo.getStatus());
 		int roomId;
 		Collection<IoSession> ssns;
+		MeetingsDAO meetingsDAO = new MeetingsDAO(MyBatisConnectionFactory.getSqlSessionFactory());
 		
 		//当レコードのサイズ
 		int currentSize;
@@ -105,14 +117,8 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				//ロビーの会議室一覧を返す
 				//TODO
 				System.out.println("1101 main process start..:");
-				ArrayList<RoomButtonInfo> roomButtonList = new ArrayList<RoomButtonInfo>();
-				for(int i = 0; i < 15; i++) {
-		            RoomButtonInfo rbi = new RoomButtonInfo();
-		            rbi.setId(i);
-		            rbi.setRoomName("ダミルーム" + i);
-		            rbi.setStatus("進行中");
-		            roomButtonList.add(rbi);
-		        }
+				ArrayList<RoomButtonInfo> roomButtonList = meetingsDAO.selectAllInfoByNow();
+				
 				String roomButtonListJson = gson.toJson(roomButtonList);
 				//連番、1から
 				seqNo = 1;
@@ -137,14 +143,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				//会議室詳細情報を返す
 				//TODO
 				System.out.println("1102 main process start..:");
-				RoomDetailInfo roomDetailInfo = new RoomDetailInfo();
-				roomDetailInfo.setId(Integer.parseInt(nreo.getMessage()));
-				roomDetailInfo.setMeetingName("会議室-" + nreo.getMessage());
-				roomDetailInfo.setLocate("本社");
-				roomDetailInfo.setStartTime("9999/99/99 99:99:99");
-				roomDetailInfo.setEndTime("9999/99/99 99:99:99");
-				roomDetailInfo.setChairManName("ベース　太郎");
-				roomDetailInfo.setChairManUserId("001");
+				RoomDetailInfo roomDetailInfo = meetingsDAO.selectMeetingInfoById(Integer.parseInt(nreo.getMessage()));
 				String roomDetailInfoJson = gson.toJson(roomDetailInfo);
 				ssn.write(new NorResponseObj(1202, -1, -1, 1, 1, roomDetailInfoJson));	
 				break;

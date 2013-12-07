@@ -8,8 +8,9 @@ public class RoomDetailInfo {
     String endTime;
     String chairManUserId;
     String chairManName;
+    String status;
 
-    public int getId() {
+	public int getId() {
         return id;
     }
 
@@ -64,4 +65,13 @@ public class RoomDetailInfo {
     public void setChairManName(String chairManName) {
         this.chairManName = chairManName;
     }
+    
+
+    public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
 }

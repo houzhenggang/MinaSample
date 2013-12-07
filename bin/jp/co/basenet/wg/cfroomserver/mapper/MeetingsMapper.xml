@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="jp.co.basenet.wg.cfroomserver.mapper.MeetingsMapper">
+ 
+    <resultMap id="result1" type="jp.co.basenet.wg.cfroomserver.model.RoomDetailInfo">
+        <result property="id" column="id"/>
+        <result property="meetingName" column="name"/> 
+        <result property="locate" column="location"/>  
+        <result property="startTime" column="start_time"/> 
+        <result property="endTime" column="end_time"/> 
+        <result property="chairManUserId" column="sponsor_id"/> 
+        <result property="chairManName" column="user_name"/> 
+        <result property="status" column="status"/>      
+    </resultMap>
+    
+    <resultMap id="result2" type="jp.co.basenet.wg.cfroomserver.model.RoomButtonInfo">
+        <result property="id" column="id"/>
+        <result property="roomName" column="name"/> 
+        <result property="status" column="status"/>    
+    </resultMap>
+
+    <select id="selectAllMeetingByNow" resultMap="result2">
+        SELECT id,
+               name,
+               status
+        FROM t_meetings
+        WHERE end_time >= CURDATE()
+    </select>
+    
+    <select id="selectMeetingInfoById" parameterType="int" resultMap="result1">
+        SELECT tm.id,
+               tm.name,
+               tm.location,
+               tm.start_time,
+               tm.end_time,
+               tm.status,
+               tm.sponsor_id,
+               tu.user_name
+        FROM t_meetings tm,
+             t_users tu
+        WHERE tm.id = #{id}
+        AND   tm.sponsor_id = tu.user_id
+        AND   tu.status = '0'
+    </select>
+</mapper>
