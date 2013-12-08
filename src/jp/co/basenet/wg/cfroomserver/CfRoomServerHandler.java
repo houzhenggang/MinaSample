@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import jp.co.basenet.wg.cfroomserver.dao.MeetingsDAO;
+import jp.co.basenet.wg.cfroomserver.dao.ParticipantDAO;
 import jp.co.basenet.wg.cfroomserver.dao.UsersDAO;
+import jp.co.basenet.wg.cfroomserver.mapper.ParticipantMapper;
 import jp.co.basenet.wg.cfroomserver.model.FileDetailInfo;
 import jp.co.basenet.wg.cfroomserver.model.NorRequestObj;
 import jp.co.basenet.wg.cfroomserver.model.NorResponseObj;
@@ -78,6 +80,9 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 			System.out.println("login failure..");
 			result = "FAILURE";
 		}
+		
+		//ユーザID
+		ssn.setAttribute("userId", userInfo.getUserId());
 		//ルーム番号
 		//-1 入室しない
 		ssn.setAttribute("roomId", "-1"); 
@@ -89,6 +94,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 		//sponsor 主催者
 		//member 一般参加者
 		ssn.setAttribute("position", "");
+		
 		ssn.write(new NorResponseObj(0001, -1, -1, 1, 1, result));
 	}
 
@@ -100,6 +106,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 		int roomId;
 		Collection<IoSession> ssns;
 		MeetingsDAO meetingsDAO = new MeetingsDAO(MyBatisConnectionFactory.getSqlSessionFactory());
+		ParticipantDAO participantDAO = new ParticipantDAO(MyBatisConnectionFactory.getSqlSessionFactory());
 		
 		//当レコードのサイズ
 		int currentSize;
@@ -152,7 +159,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				System.out.println("1103 main process start..:");
 				roomId = Integer.parseInt(nreo.getMessage());
 				String result;
-				if(roomId == 5) {
+				if(participantDAO.selectCountByUserIdMettingId((String)ssn.getAttribute("userId"), roomId) > 0) {
 					System.out.println("enter success..");
 					if("1".equals(ssn.getAttribute("TEST"))) {
 						//TODO
