@@ -1,7 +1,5 @@
 package jp.co.basenet.wg.cfroomserver;
 
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 
 import jp.co.basenet.wg.cfroomserver.model.NorResponseObj;

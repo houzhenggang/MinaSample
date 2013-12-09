@@ -13,7 +13,7 @@ public class UsersDAO {
 		this.sqlSessionFactory = sqlSessionFaactory;
 	}
 	
-	public int selectCountByUserId(UserInfo userInfo) {
+	public int selectCountByUserIdPassword(UserInfo userInfo) {
 		int result = 0;
 		SqlSession session = sqlSessionFactory.openSession();
 		

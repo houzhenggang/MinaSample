@@ -45,4 +45,11 @@
         AND   tm.sponsor_id = tu.user_id
         AND   tu.status = '0'
     </select>
+    
+    <select id="selectCountByIdUserId" resultType="int">
+        SELECT COUNT(*)
+        FROM t_meetings
+        WHERE id = #{id}
+        AND   sponsor_id = #{userId}
+    </select>
 </mapper>

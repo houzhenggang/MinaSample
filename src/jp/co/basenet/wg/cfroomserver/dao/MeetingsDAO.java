@@ -43,4 +43,18 @@ public class MeetingsDAO {
 		
 		return roomDetailInfo;
 	}
+	
+	public int selectCountByIdUserId(int id, String userId) {
+		int result = 0;
+		SqlSession session = sqlSessionFactory.openSession();
+		
+		try {
+			MeetingsMapper mapper = session.getMapper(MeetingsMapper.class);
+			result = mapper.selectCountByIdUserId(id, userId);
+		} finally {
+			session.close();
+		}
+		
+		return result;
+	}
 }

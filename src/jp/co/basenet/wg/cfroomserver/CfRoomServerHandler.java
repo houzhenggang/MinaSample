@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import jp.co.basenet.wg.cfroomserver.dao.FilesDAO;
 import jp.co.basenet.wg.cfroomserver.dao.MeetingsDAO;
 import jp.co.basenet.wg.cfroomserver.dao.ParticipantDAO;
 import jp.co.basenet.wg.cfroomserver.dao.UsersDAO;
@@ -70,7 +71,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 			//テスト用
 			ssn.setAttribute("TEST", "1");
 			result = "SUCCESS";
-		} else if (usersDAO.selectCountByUserId(userInfo) > 0) {
+		} else if (usersDAO.selectCountByUserIdPassword(userInfo) > 0) {
 			System.out.println("login success..");
 			//TODO
 			//テスト用
@@ -105,8 +106,11 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 		System.out.println(nreo.getStatus());
 		int roomId;
 		Collection<IoSession> ssns;
-		MeetingsDAO meetingsDAO = new MeetingsDAO(MyBatisConnectionFactory.getSqlSessionFactory());
-		ParticipantDAO participantDAO = new ParticipantDAO(MyBatisConnectionFactory.getSqlSessionFactory());
+		MeetingsDAO meetingsDAO = null;
+		ParticipantDAO participantDAO = null;
+		FilesDAO filesDAO = null;
+		byte[] tempMsg;
+		int length;
 		
 		//当レコードのサイズ
 		int currentSize;
@@ -124,15 +128,16 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				//ロビーの会議室一覧を返す
 				//TODO
 				System.out.println("1101 main process start..:");
-				ArrayList<RoomButtonInfo> roomButtonList = meetingsDAO.selectAllInfoByNow();
+				meetingsDAO = new MeetingsDAO(MyBatisConnectionFactory.getSqlSessionFactory());
 				
+				ArrayList<RoomButtonInfo> roomButtonList = meetingsDAO.selectAllInfoByNow();
 				String roomButtonListJson = gson.toJson(roomButtonList);
 				//連番、1から
 				seqNo = 1;
 				//byte変換
-				byte[] tempMsg = roomButtonListJson.getBytes(Charset.forName("UTF-8"));
+				tempMsg = roomButtonListJson.getBytes(Charset.forName("UTF-8"));
 				//長さ
-				int length = tempMsg.length;
+				length = tempMsg.length;
 				//レコード件数
 				recordCount = length / 512 + 1;
 				while(length >= 512) {
@@ -150,6 +155,9 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				//会議室詳細情報を返す
 				//TODO
 				System.out.println("1102 main process start..:");
+				meetingsDAO = new MeetingsDAO(MyBatisConnectionFactory.getSqlSessionFactory());
+				participantDAO = new ParticipantDAO(MyBatisConnectionFactory.getSqlSessionFactory());
+				
 				RoomDetailInfo roomDetailInfo = meetingsDAO.selectMeetingInfoById(Integer.parseInt(nreo.getMessage()));
 				String roomDetailInfoJson = gson.toJson(roomDetailInfo);
 				ssn.write(new NorResponseObj(1202, -1, -1, 1, 1, roomDetailInfoJson));	
@@ -157,27 +165,29 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 			case 1103:
 				//入室
 				System.out.println("1103 main process start..:");
+				meetingsDAO = new MeetingsDAO(MyBatisConnectionFactory.getSqlSessionFactory());
+				participantDAO = new ParticipantDAO(MyBatisConnectionFactory.getSqlSessionFactory());
 				roomId = Integer.parseInt(nreo.getMessage());
 				String result;
+				
 				if(participantDAO.selectCountByUserIdMettingId((String)ssn.getAttribute("userId"), roomId) > 0) {
 					System.out.println("enter success..");
-					if("1".equals(ssn.getAttribute("TEST"))) {
+					if(meetingsDAO.selectCountByIdUserId(roomId, (String)ssn.getAttribute("userId")) > 0) {
 						//TODO
 						//ステータスを通知
+						//主催者
+						System.out.println("sponser");
 						result = "sponser";
 					} else {
+						System.out.println("member");
 						result = "member";
 					}
+					ssn.setAttribute("roomId", roomId);
+					ssn.setAttribute("status", "active");
+					ssn.setAttribute("position", result);
 				} else {
 					System.out.println("enter failure..");
 					result = "FAILURE";
-				}
-				ssn.setAttribute("roomId", roomId);
-				ssn.setAttribute("status", "active");
-				if("1".equals(ssn.getAttribute("TEST"))) {
-					ssn.setAttribute("position", "sponser");
-				} else {
-					ssn.setAttribute("position", "member");
 				}
 				ssn.write(new NorResponseObj(1203, -1, -1, 1, 1, result));	
 				break;
@@ -185,8 +195,10 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				//ファイルリスト情報リクエスト
 				System.out.println("2101 main process start..:");
 				System.out.println("roomID: " + ssn.getAttribute("roomId"));
-				ArrayList<FileDetailInfo> fileDetailInfoList = new ArrayList<FileDetailInfo>();
-				
+				filesDAO = new FilesDAO(MyBatisConnectionFactory.getSqlSessionFactory());
+				ArrayList<FileDetailInfo> fileDetailInfoList = 
+				filesDAO.selectFileListByMettingId((Integer)ssn.getAttribute("roomId"));
+				/*
 				//ダミーファイル１
 				for(int i = 0; i < 3; i++) {
 		            FileDetailInfo fdi = new FileDetailInfo();
@@ -208,9 +220,27 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 		            fdi.setPageSize(200);
 		            fileDetailInfoList.add(fdi);
 		        }
-				
+				*/
 				String fileDetailInfoListJson = gson.toJson(fileDetailInfoList);
-				ssn.write(new NorResponseObj(2201, -1, -1, 1, 1, fileDetailInfoListJson));	
+				//連番、1から
+				seqNo = 1;
+				//byte変換
+				tempMsg = fileDetailInfoListJson.getBytes(Charset.forName("UTF-8"));
+				//長さ
+				length = tempMsg.length;
+				//レコード件数
+				recordCount = length / 512 + 1;
+				while(length >= 512) {
+					a = new byte[512];
+					System.arraycopy(tempMsg, tempMsg.length - length, a, 0, 512);
+					ssn.write(new NorResponseObj(2201, 512, tempMsg.length, seqNo++, recordCount, a));
+					length -= 512;
+				}
+				a = new byte[512];
+				System.arraycopy(tempMsg, tempMsg.length - length, a, 0, length);
+				ssn.write(new NorResponseObj(2201, 512, tempMsg.length, seqNo++, recordCount, a));
+
+				//ssn.write(new NorResponseObj(2201, -1, -1, 1, 1, fileDetailInfoListJson));	
 				break;
 			case 2102:
 				//ファイル転送
@@ -219,7 +249,7 @@ public class CfRoomServerHandler extends IoHandlerAdapter {
 				Type listType = new TypeToken<FileDetailInfo>(){}.getType();
 				FileDetailInfo fileDetailInfo = new Gson().fromJson(nreo.getMessage(), listType);
 				
-				FileInputStream fis = new FileInputStream(new File(fileDetailInfo.getFileName()));
+				FileInputStream fis = new FileInputStream(new File(fileDetailInfo.getPath() + fileDetailInfo.getName()));
 				//ファイルのサイズ
 				int fileSize = fis.available();
 				//連番、1から
